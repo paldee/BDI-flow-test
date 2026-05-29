@@ -12,6 +12,21 @@
 
 ---
 
+## 📊 ข้อมูลที่ใช้งาน (Datasets Used)
+
+ไพป์ไลน์นี้พัฒนาขึ้นโดยอิงจากโครงสร้างข้อมูลสเปกตรัมชีวภาพและแบบจำลองปรีเทรนดังนี้:
+
+1. **ชุดข้อมูล NMRQNet Simulated Mixture Dataset**:
+   - **ที่มา**: สร้างขึ้นผ่านเฟรมเวิร์ก **NMRQNet** (LiuzLab) เพื่อจำลองโครงสร้างสารเมแทบอไลต์ผสมที่มีพิกัดแกน ppm สมบูรณ์
+   - **`NMRQNet/simulated_mixtures_highres.csv`**: ข้อมูลสเปกตรัมนำเข้า (Features) ประกอบด้วย 100 ตัวอย่าง โดยแต่ละตัวอย่างมีความละเอียดข้อมูลถึง **40,000 มิติ** (แกน ppm ตั้งแต่ $-1$ ถึง $11\text{ ppm}$)
+   - **`NMRQNet/ground_truth_concentrations.csv`**: ตารางปริมาณความเข้มข้นจริง (Labels) ของสารเมแทบอไลต์ 9 ชนิดที่เป็นสารบ่งชี้โรคทางคลินิก (Clinical Biomarkers)
+2. **น้ำหนักปรีเทรน 1D-ResNet**:
+   - **`resnet1d/trained_model/model.pth`**: โมเดลโครงข่าย ResNet แบบ 1 มิติ ที่ผ่านการฝึกฝนบนข้อมูลสัญญาณคลื่นหัวใจ/สรีรวิทยาขนาดใหญ่จากคลังข้อมูล **PhysioNet Challenge 2017** นำมาใช้ชดเชยการขาดแคลนตัวอย่าง (Sim2Real Transfer Learning)
+3. **คลังพิกัดสารบริสุทธิ์อ้างอิง**:
+   - **`nmr_flow_test/reference_peaks.json`**: บรรจุพิกัดตำแหน่งพีคทางฟิสิกส์เคมี (เช่น ค่า ppm, linewidth, multiplicity) ของสารเมแทบอไลต์เป้าหมายทั้ง 9 ชนิดดึงมาจาก HMDB
+
+---
+
 ## ⚙️ ขั้นตอนการเตรียมเครื่องและการติดตั้ง (Installation & Setup)
 
 ทำตามขั้นตอนด้านล่างนี้เพื่อสร้าง Virtual Environment และติดตั้งไลบรารีทั้งหมด:
@@ -72,8 +87,11 @@ d:\hack\BDI\
 │   ├── nmr_pipeline_test.ipynb  # Jupyter Notebook ที่รัน Pipeline ทั้งหมด
 │   ├── reference_peaks.json     # ฐานข้อมูลพีคอ้างอิงสารเมแทบอไลต์ 9 ชนิด
 │   └── NMR_PIPELINE_REPORT.md   # รายงานผลสรุปการรันและค่าคะแนน Hybrid Score
-└── resnet1d/
-    ├── trained_model/
-    │   └── model.pth            # ไฟล์น้ำหนักปรีเทรน 1D-ResNet (123 MB)
-    └── net1d.py                 # โค้ดสถาปัตยกรรม 1D-ResNet
+├── resnet1d/
+│   ├── trained_model/
+│   │   └── model.pth            # ไฟล์น้ำหนักปรีเทรน 1D-ResNet (123 MB)
+│   └── net1d.py                 # โค้ดสถาปัตยกรรม 1D-ResNet
+└── NMRQNet/
+    ├── simulated_mixtures_highres.csv     # ข้อมูลนำเข้า NMR Spectrum
+    └── ground_truth_concentrations.csv   # ข้อมูลความเข้มข้นสารอ้างอิงจริง
 ```
