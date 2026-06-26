@@ -1,0 +1,12 @@
+{
+    "Experiment": "EXP-C: DTW + Cosine Pre-filter",
+    "Top_K_Candidates": 30,
+    "DTW_Threshold": 2.0,
+    "Shift_Range_ppm": "\u00b10.005",
+    "Time_Seconds": 136.81,
+    "Time_Per_Sample_Ms": 13.68,
+    "Precision_Macro": 0.3943,
+    "Recall_Macro": 0.3723,
+    "F1_Macro": 0.3248,
+    "Exact_Match_Ratio": 0.0
+}

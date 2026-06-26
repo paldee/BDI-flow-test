@@ -1,0 +1,13 @@
+{
+    "Experiment": "EXP-A: NMF Decomposition",
+    "NMF_Components": 50,
+    "Valid_Components": 50,
+    "Weight_Threshold": 0.01,
+    "Sim_Threshold": 0.3,
+    "Time_Seconds": 29.98,
+    "Time_Per_Sample_Ms": 3.0,
+    "Precision_Macro": 0.0017,
+    "Recall_Macro": 0.0372,
+    "F1_Macro": 0.0032,
+    "Exact_Match_Ratio": 0.0
+}

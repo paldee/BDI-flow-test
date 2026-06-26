@@ -1,0 +1,11 @@
+{
+    "Experiment": "EXP-F: 1D-CNN + Transformer",
+    "Model_Params": 3269808,
+    "Best_Threshold": 0.7500000000000002,
+    "Time_Training_Mins": 14.62,
+    "Time_Inference_Total_Secs": 0.96,
+    "Time_Per_Sample_Ms": 0.96,
+    "Precision_Macro": 0.0696,
+    "Recall_Macro": 0.1735,
+    "F1_Macro": 0.0905
+}

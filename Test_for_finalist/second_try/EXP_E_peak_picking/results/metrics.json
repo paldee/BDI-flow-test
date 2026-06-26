@@ -1,0 +1,9 @@
+{
+    "Experiment": "EXP-E: Peak Picking",
+    "Time_Seconds": 1047.89,
+    "Time_Per_Sample_Ms": 104.79,
+    "Precision_Macro": 0.0114,
+    "Recall_Macro": 0.999,
+    "F1_Macro": 0.0226,
+    "Exact_Match_Ratio": 0.0
+}
