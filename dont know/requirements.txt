@@ -1,0 +1,11 @@
+# Dependencies for NMR Hybrid Physics-Aware AI Pipeline
+--extra-index-url https://download.pytorch.org/whl/cpu
+torch
+torchdiffeq
+dtw-python
+matplotlib
+pandas
+numpy
+scipy
+ipykernel
+scikit-learn

@@ -1,0 +1,25 @@
+# Ignore virtual environment
+.venv/
+env/
+venv/
+
+# Ignore large datasets and models
+*.csv
+*.npy
+*.pkl
+*.h5
+*.pt
+*.mp4
+*.exe
+*.docx
+*.pdf
+*.pptx
+
+# Python caches
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+
+# Temporary and local files
+.tempmediaStorage/
+scratch/

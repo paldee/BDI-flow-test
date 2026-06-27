@@ -1,0 +1,54 @@
+EXP05: NMF Decomposition (Unsupervised)
+Average Matched Component Similarity: 0.7176
+Best Relative Threshold: 0.012165
+Macro Precision: 0.9080
+Macro Recall: 0.6264
+Macro F1-Score: 0.6815
+Elapsed Time: 5.85 seconds
+
+Classification Report:
+                        precision    recall  f1-score   support
+
+               Alanine       0.87      1.00      0.93       630
+              Creatine       0.99      0.93      0.96       619
+               Choline       1.00      0.96      0.98       609
+       2-Aminobutyrate       0.99      0.86      0.92       627
+     2-Hydroxybutyrate       1.00      0.35      0.52       643
+        2-Oxoglutarate       1.00      0.03      0.07       632
+     3-Hydroxybutyrate       1.00      0.13      0.23       645
+               Acetate       1.00      0.97      0.99       631
+          Acetoacetate       1.00      0.98      0.99       635
+               Acetone       1.00      0.90      0.95       620
+            Asparagine       0.82      1.00      0.90       628
+               Citrate       1.00      0.67      0.81       629
+            Creatinine       1.00      0.75      0.85       635
+      Dimethyl sulfone       0.98      0.98      0.98       636
+               Ethanol       0.99      0.95      0.97       631
+               Glycine       0.99      0.85      0.92       644
+              Glycerol       0.99      0.45      0.62       616
+             Galactose       0.71      0.09      0.17       608
+             Glutamate       0.73      0.28      0.40       636
+             Glutamine       0.70      0.41      0.51       627
+            Methionine       0.84      0.97      0.90       642
+   N,N-Dimethylglycine       0.98      0.99      0.99       651
+               lactate       0.78      0.99      0.87       631
+             succinate       0.96      0.96      0.96       633
+Trimethylamine N-oxide       1.00      0.19      0.32       616
+             Threonine       0.66      0.55      0.60       620
+              Pyruvate       1.00      0.93      0.96       632
+                Valine       0.99      0.94      0.97       629
+             Histidine       1.00      0.24      0.39       623
+              Tyrosine       0.91      0.37      0.53       638
+               Leucine       1.00      0.08      0.14       631
+            Isoleucine       0.87      0.06      0.12       631
+               Glucose       0.68      0.55      0.61       630
+         Phenylalanine       0.72      0.11      0.19       608
+             Ornithine       0.80      0.33      0.47       613
+                Lysine       0.83      0.56      0.67       621
+               Proline       0.71      0.53      0.61       620
+             Sarcosine       1.00      0.92      0.96       635
+
+             micro avg       0.91      0.63      0.74     23885
+             macro avg       0.91      0.63      0.68     23885
+          weighted avg       0.91      0.63      0.68     23885
+           samples avg       0.89      0.62      0.73     23885

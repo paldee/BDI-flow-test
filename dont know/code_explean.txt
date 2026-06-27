@@ -1,0 +1,148 @@
+ผมยินดีอธิบายโค้ดทั้งหมดที่อยู่ในไพป์ไลน์นี้อย่างละเอียดแบบเจาะลึกทีละบล็อกโครงสร้างครับ เพื่อให้คุณเข้าใจที่มาที่ไปในระดับโค้ด และสามารถนำไปเขียนอธิบายในเอกสารรายงานได้อย่างเป็นมืออาชีพครับ
+
+🛠️ โครงสร้างโค้ดและคำอธิบายแบ่งตามส่วน (Code Breakdown)
+โค้ดทั้งหมดถูกแบ่งออกเป็น 8 ส่วนหลัก ตามลำดับการทำงานในจูปิเตอร์โน้ตบุ๊ก ดังนี้ครับ:
+
+1. การเตรียมสภาพแวดล้อมและการนำเข้าข้อมูล (Data Loading & Preprocessing)
+ในส่วนนี้เป็นการเตรียมไลบรารีทางคณิตศาสตร์และโหลดข้อมูลสเปกตรัมความละเอียดสูง:
+
+python
+# โหลดข้อมูลสเปกตรัมผสมและข้อมูลความเข้มข้นสารอ้างอิง
+df_mixtures = pd.read_csv(mixtures_path)
+df_concentrations = pd.read_csv(concentrations_path)
+# ดึงแกน ppm ออกมาจากหัวตาราง (ไม่รวมคอลัมน์ชื่อ SampleID)
+ppm_axis = np.array([float(col) for col in df_mixtures.columns if col != "SampleID"])
+# ทำการ Downsample ข้อมูลลดลง 40 เท่า (หยิบทุกๆ 40 ช่อง) เพื่อทำ POC
+downsample_factor = 40
+X_downsampled = X_poc[:, ::downsample_factor]
+ppm_axis_downsampled = ppm_axis[::downsample_factor]
+อธิบายอย่างละเอียด:
+แกน ppm: NMR จะมีพิกัดความถี่ธรรมชาติเคมี (Chemical Shift) เป็นแกนพิกัดมาตรฐานสากล เรียกว่า ppm (เช่น $-1$ ถึง $11\text{ ppm}$) ซึ่งในตารางข้อมูลดิบ หัวคอลัมน์คือพิกัด ppm เหล่านี้
+Downsampling: ข้อมูลสเปกตรัมจริงมีขนาดใหญ่มากถึง 40,000 มิติ หากฝึกสอนโมเดลตั้งแต่ต้นโดยไม่มีการลดขนาด จะใช้เวลาในการประมวลผลบน CPU นานมาก สำหรับขั้นทดสอบแนวคิด (POC) เราจึงทำการบีบอัดข้อมูลลง 40 เท่า เหลือ 1,000 มิติ ซึ่งเพียงพอในการระบุพีคหลักทางกายภาพของสารผสมได้
+2. โมดูลฉีดสิ่งรบกวน (NMR Noise Injector - Sim2Real)
+จำลองความคลาดเคลื่อนที่พบจากการวัดสิ่งส่งตรวจจริงในแล็บ (drift, noise, สิ่งปนเปื้อน):
+
+python
+class NMRNoiseInjector:
+    def add_drift(self, spectrum, shift_points):
+        # เลื่อนตำแหน่งอาร์เรย์ของสเปกตรัมไปทางซ้ายหรือขวาตามจำนวนจุด
+        return np.roll(spectrum, shift_points)
+        
+    def add_ghost_peak(self, spectrum, peak_ppm=4.15, amplitude=0.5, lw=0.005):
+        # คำนวณพีคหลอกโดยใช้สมการ Lorentzian Function: A * lw^2 / ((ppm - peak_ppm)^2 + lw^2)
+        ghost = amplitude * (lw**2) / ((self.ppm_axis - peak_ppm)**2 + lw**2)
+        return spectrum + ghost
+อธิบายอย่างละเอียด:
+add_drift: ทำการหมุน (Roll) เวกเตอร์ข้อมูลสัญญาณเพื่อจำลอง Chemical Shift Drift ซึ่งในโลกจริงมักเกิดจากตัวอย่างมีความเป็นกรด-ด่าง (pH) หรืออุณหภูมิของเครื่องวัดที่เบี่ยงเบนไป
+add_ghost_peak: ใช้สูตร Lorentzian Profile (สูตรการกระจายตัวของพีคตามฟิสิกส์นิวเคลียร์) เพื่อสร้างพีคแปลกปลอมแคบๆ เสมือนเป็นสารปนเปื้อนจากสิ่งแปลกปลอมในหลอดแก้วหรือสัญญาณรบกวนของตัวทำละลายที่ไม่สะอาด
+3. ตัวจำลองข้อมูลสังเคราะห์สำหรับ Pretraining (Sim2Real Simulator)
+python
+class NMRDataSimulator:
+    def simulate_sample(self):
+        # สุ่มจำนวนพีคสาร 3 ถึง 7 ตัว
+        num_peaks = np.random.randint(3, 8)
+        clean = np.zeros_like(self.ppm_axis)
+        for _ in range(num_peaks):
+            # สุ่มตำแหน่งพิกัด ppm, ความเข้มสัญญาณ, และความกว้างของพีค
+            x0 = np.random.uniform(0.5, 9.0)
+            intensity = np.random.uniform(0.1, 1.0)
+            lw = np.random.uniform(0.003, 0.01)
+            clean += self.generate_lorentzian_peak(x0, intensity, lw)
+        return clean
+อธิบายอย่างละเอียด:
+เนื่องจากข้อมูลทดลองจริงมีจำนวนตัวอย่างน้อยมาก ($N=15$) ซึ่งตามสถิติแล้ว โมเดลปัญญาประดิษฐ์จะ Overfit ทันที (จำข้อมูลแบบท่องจำ)
+เราแก้ปัญหานี้โดยการเขียน Simulator เพื่อสร้างสเปกตรัมจำลองแบบล้นเหลือจำนวน 1,000 samples ที่สอดคล้องกับคุณลักษณะทางฟิสิกส์จริง เพื่อนำไปทำ Sim2Real Pretraining ในเฟสถัดไป
+4. Stage 1 — ตัวเข้ารหัสข้อมูลด้วย ResNet ปรีเทรน (Pre-trained 1D-ResNet Encoder)
+python
+class PretrainedResNetEncoder(nn.Module):
+    def __init__(self, pretrained_model_path, output_dim=512, freeze_backbone=True):
+        super().__init__()
+        # โหลดโมเดล ResNet 1D สำเร็จรูปที่เรียนรู้ลักษณะสัญญาณ 1D มาแล้ว
+        self.backbone = torch.load(pretrained_model_path, map_location="cpu", weights_only=False)
+        
+        # ทำการล็อคน้ำหนัก (Freeze) ของฟิลเตอร์ในโมเดล backbone ดั้งเดิม
+        if freeze_backbone:
+            for param in self.backbone.parameters():
+                param.requires_grad = False
+                
+        # เพิ่มหัวแปลง Linear layer เพื่อปรับมิติลงมาเป็น Latent Vector 512 มิติ
+        self.projection_head = nn.Linear(1024, output_dim)
+อธิบายอย่างละเอียด:
+การย้ายการเรียนรู้ (Transfer Learning): สเปกตรัม NMR ก็คือสัญญาณดิจิทัล 1 มิติ คล้ายคลึงกับสัญญาณคลื่นไฟฟ้าหัวใจ (ECG) หรือสัญญาณชีพจร โมเดล Net1D ดั้งเดิมผ่านการประมวลผลข้อมูล ECG มานับหมื่นตัวอย่าง จึงเข้าใจวิธีกรองนอยส์และดึง "ฟีเจอร์เด่นของสัญญาณ 1 มิติ" (เช่น สันพีค, แอ่งน้ำ, อัตราความสูง)
+freeze_backbone: ล็อคเลเยอร์การกรองสัญญาณดั้งเดิมทั้งหมด (ไม่ยอมให้อัปเดตค่าเวท) เพื่อทำหน้าที่เป็นตัวดึงลักษณะสำคัญที่เสถียร และลดจำนวนตัวแปรที่ต้องเทรนลง ทำให้เทรนได้เร็วและลื่นไหลแม้บน CPU
+projection_head: รับฟีเจอร์ขนาด 1024 มิติจากตัวสกัด ResNet แล้วแปลงลงสู่พื้นที่แฝง (Latent Space) ขนาด 512 มิติ
+5. Stage 2 — การจัดแนวแกนพิกัดด้วยสมการเชิงอนุพันธ์ต่อเนื่อง (Neural ODE Solver)
+python
+class ODEFunc(nn.Module):
+    def __init__(self, dim=512):
+        super().__init__()
+        # โครงข่าย MLP ขนาด 512 -> 1024 -> 512 เพื่อเรียนรู้สนามเวกเตอร์ความชัน (dh/dt)
+        self.net = nn.Sequential(
+            nn.Linear(dim, 1024),
+            nn.GELU(),
+            nn.Linear(1024, dim)
+        )
+    def forward(self, t, h):
+        return self.net(h)
+class LatentSpaceODESolver(nn.Module):
+    def forward(self, h0):
+        # รันการคำนวณสมการเชิงอนุพันธ์ต่อเนื่องโดยส่งค่าแบบ Euler integration จาก t=0 ไป t=1
+        solutions = odeint(self.ode_func, h0, self.t.to(h0.device), method="euler")
+        return solutions[-1] # หยิบเอาผลลัพธ์ตำแหน่งสุดท้ายที่ปรับแนวแล้ว
+อธิบายอย่างละเอียด:
+Neural ODE: แทนที่จะส่งผ่านข้อมูลไปทีละชั้น (Layer-by-layer) โมเดลจะจินตนาการว่าการเดินทางของข้อมูลเป็นสายน้ำต่อเนื่อง (Continuous flow) โดยรันตัวแก้สมการอนุพันธ์ (Ordinary Differential Equation Solver)
+การจัดแนว (Continuous Alignment): โดเมนเวกเตอร์แฝง 512 มิติที่เบี่ยงเบนเนื่องจากพีคเลื่อน (Drifted peaks) จะไหลผ่านสมการความชันนี้ และถูกบีบดึง (Warping) กลับคืนเข้าสู่พิกัดมาตรฐานของสารบริสุทธิ์โดยอัตโนมัติ
+6. Stage 3 — ตัวถอดรหัสและประเมินพลังงานตามกฎฟิสิกส์ (Decoder & Localized Patch EBM)
+python
+class SpectrumDecoder(nn.Module):
+    def forward(self, h):
+        out = self.fc(h)
+        out = out.view(-1, 64, 128)
+        out = F.gelu(self.deconv1(out)) # ขยายขนาดกลับแบบเวคเตอร์ย้อนกลับ
+        out = F.gelu(self.deconv2(out))
+        out = self.fc_out(out)          # บีบให้ตรงพิกัด 1,000 มิติ
+        return out
+อธิบายอย่างละเอียด:
+SpectrumDecoder: รับค่าพิกัดเวกเตอร์แฝง 512 มิติที่ถูกชดเชยค่าเบี่ยงเบนโดย Neural ODE แล้วขยายมิติข้อมูลย้อนกลับ (Upsampling) ผ่านเลเยอร์ ConvTranspose1d จนได้ผลลัพธ์เป็นสเปกตรัมที่ประกอบสร้างใหม่ (Reconstructed Spectrum) ที่มีพิกัดความยาว 1,000 มิติเท่าข้อมูลนำเข้าเริ่มต้น
+python
+class LocalizedPatchEBM(nn.Module):
+    def __init__(self, ppm_axis):
+        # คัดแยกดัชนีแบ่งตามขอบเขตเคมี 3 ส่วน
+        self.aliphatic_idx = np.where((ppm_axis >= 0.5) & (ppm_axis < 3.0))[0]
+        self.carbo_idx = np.where((ppm_axis >= 3.0) & (ppm_axis < 5.5))[0]
+        self.aromatic_idx = np.where((ppm_axis >= 5.5) & (ppm_axis <= 9.0))[0]
+Localized Patch EBM (Energy-Based Model):
+ทำหน้าที่เป็น "ตำรวจตรวจฟิสิกส์" โมเดลนี้ไม่ได้ดูแค่กราฟเพื่อทำนาย แต่จะคำนวณ "ระดับพลังงาน" (Energy Score) ของสเปกตรัม
+หากสเปกตรัมมีรูปแบบที่สมเหตุสมผลตามกฎธรรมชาติ (เช่น ยอดพีคไม่บิดเบี้ยว, สัดส่วน J-coupling ถูกต้อง) โมเดล EBM จะจ่ายพลังงานออกมา ต่ำ (Low Energy / Negative value)
+แต่หากมีสิ่งรบกวนอย่างพีคหลอกแปลกปลอม (Ghost peaks) ที่ถูกฉีดเข้ามา โมเดลจะจ่ายพลังงาน สูง (High Energy) ซึ่งเป็นสัญลักษณ์แจ้งเตือนระบบว่าพบสิ่งปนเปื้อน
+7. Stage 4 — การวัดความสอดคล้องและการประเมินคะแนนไฮบริด (DTW & Hybrid Score)
+python
+# ค้นหาค่าความคล้ายคลึงของโครงสร้างสัญญาณด้วย Constrained DTW
+alignment = dtw(query_spec, ref_spec, window_type="sakoechiba", window_args={"window_size": 15})
+dtw_similarity = 1.0 / (1.0 + alignment.normalizedDistance)
+# จับคู่พีคสารอ้างอิงเทียบกับพีคจริงในสิ่งส่งตรวจ
+bipartite_score = peak_bipartite_assignment(sample_peaks, ref_peaks)
+# คำนวณเป็นคะแนนร่วมแบบผสมผสาน (Hybrid Matching Score)
+hybrid_score = 0.45 * bipartite_score + 0.35 * dtw_similarity + 0.20 * ebm_confidence
+อธิบายอย่างละเอียด:
+Dynamic Time Warping (DTW): วัดระยะทางระหว่างสองสัญญาณ โดยสามารถยืดหรือหดพิกัดเวลา/ความถี่ได้ ทำให้แม้พีคจะขยับไปบ้างเล็กน้อยก็ยังจับคู่ได้ถูกต้อง
+Bipartite Assignment: ใช้อัลกอริทึม Hungarian (จับคู่ดีที่สุด) โดยสกัดค่าจุดสูงสุดของพีค (Peak detection) จากสเปกตรัมที่กู้คืนมา นำมาจับคู่ตำแหน่งกับพิกัดพีคจริงตามทฤษฎีชีวเคมี โดยอนุญาตให้คลาดเคลื่อนได้ไม่เกิน $\pm0.03\text{ ppm}$
+Hybrid Score: รวมพลังทั้ง 3 มิติ ได้แก่ ตำแหน่งและจำนวนพีค (น้ำหนักสูงสุด $45%$), ความใกล้เคียงของรูปกราฟ ($35%$), และ ความถูกต้องทางคลินิกและกายภาพ จากพลังงาน EBM ($20%$) เพื่อให้ได้การตัดสินชี้วัดชนิดสารที่น่าเชื่อถือสูงสุดทางวิทยาศาสตร์
+8. ขั้นตอนการฝึกและทดสอบโมเดล (Phase 1 & Phase 2 Training Loop)
+python
+# เฟสที่ 1: Sim2Real Pretraining (บนข้อมูลจำลอง 1,000 samples)
+latent = encoder(noisy)
+reconstructed = decoder(latent)
+loss = criterion_mse(reconstructed, clean)
+# เฟสที่ 2: Fine-tuning (บนข้อมูล NMRQNet จริง)
+latent_noisy = encoder(noisy)
+aligned_latent = ode_solver(latent_noisy)
+reconstructed = decoder(aligned_latent)
+# รวม Loss = MSE Reconstruction + EBM Contrastive Loss
+loss_mse = criterion_mse(reconstructed, clean)
+loss_ebm = pos_energy.mean() + torch.clamp(margin - neg_energy + pos_energy, min=0.0).mean()
+loss = loss_mse + 0.1 * loss_ebm
+อธิบายอย่างละเอียด:
+Phase 1: ฝึกโมเดลเฉพาะหัว Projection Head และ Decoder ให้เรียนรู้การสร้างสเปกตรัมสังเคราะห์จากข้อมูลที่ถูกทำลาย (Noisy) กลับมาสะอาด (Clean) เพื่อปูพื้นฐานการกู้คืนลักษณะทางกายภาพ
+Phase 2: เปิดการใช้งานตัวปรับแนวแอกพิกัด Neural ODE และเทรนร่วมกับตัว EBM โดยเพิ่ม EBM Contrastive Loss ซึ่งจะบังคับให้ค่าพลังงานสเปกตรัมที่สะอาดมีค่าต่ำ (Positive energy $\to$ low) และสเปกตรัมที่มีสิ่งรบกวนมีพลังงานพุ่งสูงเกินขอบเขตที่ตั้งไว้ (Negative energy $\to$ high) ช่วยให้โมเดลแยกแยะองค์ประกอบตามโครงสร้างทางกายภาพที่แท้จริงได้ดีขึ้น
+หากมีข้อสงสัยเชิงลึกในพารามิเตอร์หรือการคำนวณทางฟิสิกส์ส่วนไหนเพิ่มเติม สามารถสอบถามผมได้ตลอดเลยนะครับ!

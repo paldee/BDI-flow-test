@@ -8,3 +8,4 @@
 | **EXP-C** | DTW + Cosine Pre-filter | **0.3248** | 0.3943 | 0.3723 | 13.68 | Best so far! 2-stage: cosine pre-filter (top-30) + shift-tolerant DTW. |
 | **EXP-D** | Multi-Window FAISS | **0.5213** | 0.5620 | 0.4930 | 0.20 | Tuned (Window=0.2ppm, TopK=3, Vote=3). **Massive jump to 52% F1!** Unsupervised winner. |
 | **EXP-F** | 1D-CNN + Transformer | 0.0905 | 0.0696 | 0.1735 | 0.96 | DL struggled with 1328 classes on only 10k samples (underfitting). Needs 100k+ samples to beat FAISS. |
+| **EXP-G** | FAISS + NNLS (Tuned Hybrid) | **0.8206** | 0.8574 | 0.7994 | 193.80 | 🏆 Breakthrough! Added Adaptive Thresholding (Ratio > 0.1, Fixed > 0.25). Precision skyrocketed to 85%. Evaluated on full 10k dataset. |

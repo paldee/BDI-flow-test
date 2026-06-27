@@ -1,0 +1,53 @@
+EXP04: CNN + Transformer
+Test Set Size: 200
+Macro Precision: 0.8626
+Macro Recall: 0.8632
+Macro F1-Score: 0.8592
+Elapsed Time: 43.75 seconds
+
+Classification Report:
+                        precision    recall  f1-score   support
+
+               Alanine       0.97      0.98      0.98       131
+              Creatine       0.71      0.72      0.72       120
+               Choline       0.80      0.98      0.88       125
+       2-Aminobutyrate       0.69      0.84      0.76       116
+     2-Hydroxybutyrate       0.82      0.68      0.74       130
+        2-Oxoglutarate       0.95      0.78      0.85       129
+     3-Hydroxybutyrate       0.90      0.83      0.86       128
+               Acetate       1.00      0.98      0.99       127
+          Acetoacetate       0.86      0.99      0.92       124
+               Acetone       0.97      0.98      0.98       122
+            Asparagine       0.98      0.84      0.90       116
+               Citrate       0.98      0.97      0.98       117
+            Creatinine       0.94      0.83      0.88       131
+      Dimethyl sulfone       0.95      0.99      0.97       125
+               Ethanol       1.00      0.97      0.98       128
+               Glycine       0.97      0.97      0.97       129
+              Glycerol       0.73      0.75      0.74       120
+             Galactose       0.70      0.83      0.76       115
+             Glutamate       0.81      0.83      0.82       127
+             Glutamine       0.65      0.85      0.73       118
+            Methionine       0.99      0.98      0.98       131
+   N,N-Dimethylglycine       0.98      0.99      0.99       132
+               lactate       0.85      0.73      0.78       114
+             succinate       0.67      0.85      0.75       121
+Trimethylamine N-oxide       0.98      0.98      0.98       121
+             Threonine       0.83      0.78      0.81       122
+              Pyruvate       0.77      0.71      0.74       126
+                Valine       0.99      0.95      0.97       118
+             Histidine       0.70      0.80      0.75       123
+              Tyrosine       0.79      0.86      0.83       124
+               Leucine       0.84      0.69      0.76       131
+            Isoleucine       0.96      0.76      0.85       131
+               Glucose       0.77      0.89      0.82       125
+         Phenylalanine       0.80      0.73      0.76       123
+             Ornithine       0.81      0.65      0.72       124
+                Lysine       0.69      0.95      0.80       115
+               Proline       0.97      0.93      0.95       128
+             Sarcosine       1.00      0.97      0.98       119
+
+             micro avg       0.86      0.86      0.86      4706
+             macro avg       0.86      0.86      0.86      4706
+          weighted avg       0.86      0.86      0.86      4706
+           samples avg       0.84      0.80      0.81      4706
